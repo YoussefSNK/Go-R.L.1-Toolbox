@@ -1,6 +1,11 @@
+import os
 import subprocess
 
 urls = "urls.txt"
+output_dir = "Video"
+
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
 
 try:
     with open(urls, "r") as f:
@@ -14,7 +19,10 @@ resultats = []
 for url in urls:
     try:
         print(f"Téléchargement de la vidéo depuis : {url}")
-        subprocess.run(["yt-dlp", url, "-o", "%(title)s.%(ext)s"], check=True)
+        subprocess.run(
+            ["yt-dlp", url, "-o", os.path.join(output_dir, "%(title)s.%(ext)s")],
+            check=True
+        )
         resultats.append((url, "Succès"))
         print("Téléchargement terminé !")
     except subprocess.CalledProcessError as e:
