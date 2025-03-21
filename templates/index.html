@@ -23,8 +23,11 @@
             text-align: center;
         }
         form {
-            display: flex;
             margin-bottom: 20px;
+        }
+        .input-group {
+            display: flex;
+            margin-bottom: 15px;
         }
         input[type="text"] {
             flex: 1;
@@ -32,7 +35,7 @@
             border: 1px solid #ddd;
             border-radius: 4px 0 0 4px;
         }
-        button {
+        .submit-btn {
             padding: 10px 20px;
             background-color: #cc0000;
             color: white;
@@ -40,8 +43,20 @@
             border-radius: 0 4px 4px 0;
             cursor: pointer;
         }
-        button:hover {
+        .submit-btn:hover {
             background-color: #990000;
+        }
+        .format-options {
+            margin-bottom: 15px;
+        }
+        .format-label {
+            margin-right: 15px;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        .format-label input {
+            margin-right: 5px;
         }
         .history {
             margin-top: 30px;
@@ -88,6 +103,45 @@
             background-color: #6c757d;
             border-radius: 4px;
         }
+        .format-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+            vertical-align: middle;
+            background-size: contain;
+        }
+        .format-video {
+            color: #cc0000;
+        }
+        .format-mp3 {
+            color: #0066cc;
+        }
+        .system-info {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .status-good {
+            color: #28a745;
+        }
+        .status-warning {
+            color: #dc3545;
+        }
+        .help-text {
+            font-size: 14px;
+            margin-top: 5px;
+            color: #6c757d;
+        }
+        .ffmpeg-warning {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
     </style>
 </head>
 <body>
@@ -102,9 +156,41 @@
         </div>
         {% endif %}
         
+        {% if not ffmpeg_status.available %}
+        <div class="ffmpeg-warning">
+            <p><strong>⚠️ FFmpeg n'est pas installé</strong> - La conversion en MP3 ne sera pas possible.</p>
+            <p>Pour installer FFmpeg:</p>
+            <ol>
+                <li>Téléchargez FFmpeg depuis <a href="https://ffmpeg.org/download.html" target="_blank">le site officiel</a></li>
+                <li>Extrayez l'archive téléchargée</li>
+                <li>Deux options:
+                    <ul>
+                        <li>Ajoutez le dossier contenant ffmpeg.exe à votre PATH système</li>
+                        <li>OU créez un dossier "ffmpeg/bin" à côté de ce script et placez-y ffmpeg.exe</li>
+                    </ul>
+                </li>
+                <li>Redémarrez l'application</li>
+            </ol>
+        </div>
+        {% endif %}
+        
         <form method="post">
-            <input type="text" name="url" placeholder="Entrez l'URL de la vidéo YouTube" required>
-            <button type="submit">Télécharger</button>
+            <div class="format-options">
+                <label class="format-label">
+                    <input type="radio" name="format" value="video" checked>
+                    <span class="format-video">📹 Vidéo (meilleure qualité)</span>
+                </label>
+                <label class="format-label" {% if not ffmpeg_status.available %}title="FFmpeg requis pour le format MP3"{% endif %}>
+                    <input type="radio" name="format" value="mp3" {% if not ffmpeg_status.available %}disabled{% endif %}>
+                    <span class="format-mp3">🎵 MP3 (audio uniquement)</span>
+                    {% if not ffmpeg_status.available %}<small class="status-warning">⚠️ Nécessite FFmpeg</small>{% endif %}
+                </label>
+            </div>
+            
+            <div class="input-group">
+                <input type="text" name="url" placeholder="Entrez l'URL de la vidéo YouTube" required>
+                <button type="submit" class="submit-btn">Télécharger</button>
+            </div>
         </form>
         
         {% if downloads %}
@@ -119,7 +205,14 @@
             
             {% for id, download in downloads.items() %}
             <div class="download-item {{ download.status }}">
-                <p><strong>URL:</strong> {{ download.url }}</p>
+                <p>
+                    <strong>URL:</strong> {{ download.url }}
+                    {% if download.format == 'video' %}
+                    <span class="format-video">📹 Vidéo</span>
+                    {% elif download.format == 'mp3' %}
+                    <span class="format-mp3">🎵 MP3</span>
+                    {% endif %}
+                </p>
                 <p><strong>Statut:</strong> 
                     {% if download.status == 'success' %}
                         Téléchargé avec succès
@@ -137,6 +230,18 @@
             {% endfor %}
         </div>
         {% endif %}
+        
+        <div class="system-info">
+            <p>
+                <strong>État du système:</strong>
+                FFmpeg: 
+                {% if ffmpeg_status.available %}
+                <span class="status-good">✅ Disponible ({{ ffmpeg_status.path }})</span>
+                {% else %}
+                <span class="status-warning">❌ Non trouvé</span>
+                {% endif %}
+            </p>
+        </div>
     </div>
 </body>
 </html>
